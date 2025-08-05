@@ -1,5 +1,5 @@
 {
-  "name": "vectorface/googleauthenticator",
+  "name": "jvvict0r/googleauthenticator",
   "description": "Google Authenticator 2-factor authentication",
   "type": "library",
   "keywords": ["GoogleAuthenticator", "TOTP", "rfc6238"],
