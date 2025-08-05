@@ -104,6 +104,36 @@ class GoogleAuthenticator
     }
 
     /**
+     * Get QR-Code URL for image, from our native QRCode API with additional parameters
+     *
+     * @param string $account Account Name
+     * @param string $secret A base32-encoded secret (rfc3548)
+     * @param string|null $issuer The provider or issuer with which the account is associated (optional)
+     * @param array $parameters Additional parameters to include in the URI
+     * @return string Generate a QRCode for a given string
+     * @throws Exception on encoding error
+     */
+    public function getQRCodeUrlWithParameters(
+        string $account,
+        string $secret,
+        ?string $issuer = null,
+        array $parameters = []
+    ): string {
+        $builder = $this->getUriBuilder()
+            ->issuer($issuer)
+            ->account($account)
+            ->secret($secret);
+
+        foreach ($parameters as $name => $value) {
+            $builder->setParameter($name, $value);
+        }
+
+        var_dump( $builder->getUri() );
+
+        return $this->getQRCodeDataUri($builder->getUri());
+    }
+
+    /**
      * Build an OTP URI using the builder pattern
      */
     public function getUriBuilder(): UriBuilder
@@ -125,8 +155,8 @@ class GoogleAuthenticator
     protected function getQRCodeDataUri(string $uri) : string
     {
         return (new Builder(
-            data: $uri,
             writer: new PngWriter,
+            data: $uri,
             size: 260,
             margin: 10,
         ))->build()->getDataUri();

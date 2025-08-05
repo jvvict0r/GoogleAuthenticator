@@ -32,6 +32,7 @@ class UriBuilder
     private string $secret;
     private string $account = '';
     private ?string $issuer = null;
+    private array $parameters = [];
     private Type $type = Type::TOTP;
     private ?Algorithm $algorithm = null;
     private ?int $digits = null;
@@ -58,6 +59,16 @@ class UriBuilder
     public function issuer(?string $issuer = null): self
     {
         $this->issuer = $issuer;
+        return $this;
+    }
+
+    public function setParameter(string $name, string $value): self
+    {
+        if (empty($name) || empty($value)) {
+            throw new InvalidArgumentException("Parameter name and value must not be empty");
+        }
+
+        $this->parameters[$name] = $value;
         return $this;
     }
 
@@ -118,14 +129,17 @@ class UriBuilder
             throw new DomainException("Period parameter does not apply to HOTP");
         }
 
-        $params = array_filter([
-            'secret'    => $this->secret,
-            'issuer'    => empty($this->issuer) ? $this->issuer : rawurlencode($this->issuer),
-            'algorithm' => $this->algorithm?->value,
-            'digits'    => $this->digits,
-            'counter'   => $this->counter,
-            'period'    => $this->period,
-        ]);
+        $params = array_merge(
+            array_filter([
+                'secret'    => $this->secret,
+                'issuer'    => empty($this->issuer) ? $this->issuer : rawurlencode($this->issuer),
+                'algorithm' => $this->algorithm?->value,
+                'digits'    => $this->digits,
+                'counter'   => $this->counter,
+                'period'    => $this->period,
+            ]),
+            $this->parameters
+        );
 
         return sprintf(
             "%s://%s/%s?%s",
@@ -144,8 +158,8 @@ class UriBuilder
     public function getQRCodeDataUri(): string
     {
         return (new Builder(
-            data: $this->getUri(),
             writer: new PngWriter(),
+            data: $this->getUri(),
             size: 260,
             margin: 10
         ))->build()->getDataUri();
